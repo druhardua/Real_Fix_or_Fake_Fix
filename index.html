@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Real Fix or Fake Fix?</title>
+<style>
+  :root{
+    --bg1:#fdf4e7; --bg2:#f6e2cc; --ink:#4a3628; --soft:#8f725c;
+    --card:#fffaf2; --edge:#efd8bd; --accent:#e9846a; --accent2:#cf6a50;
+    --real:#3f9e6e; --realbg:#e5f5ea; --fake:#d9534f; --fakebg:#fde8e4; --glow:#ffd166;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;overflow-x:hidden}
+  body{
+    font-family: ui-rounded,"Segoe UI",system-ui,-apple-system,Roboto,sans-serif;
+    color:var(--ink);
+    background:linear-gradient(180deg,var(--bg1),var(--bg2));
+    min-height:100vh;min-height:100dvh;
+  }
+  #app{max-width:860px;margin:0 auto;padding:10px 12px 28px}
+  button{font:inherit;color:inherit;cursor:pointer}
+  [hidden]{display:none !important}
+
+  .big-btn{min-height:56px;min-width:170px;padding:12px 28px;border:none;border-radius:999px;
+    background:var(--accent);color:#fff;font-size:22px;font-weight:900;
+    box-shadow:0 5px 0 var(--accent2),0 8px 18px rgba(200,100,70,.22);transition:transform .1s, box-shadow .1s}
+  .big-btn:active{transform:translateY(4px);box-shadow:0 1px 0 var(--accent2)}
+  .big-btn.ghosty{background:#fff;color:var(--accent2);box-shadow:0 5px 0 #e8cdb2}
+  button:focus-visible{outline:4px solid var(--glow);outline-offset:3px}
+
+  /* start */
+  .screen{text-align:center;padding:10px 4px}
+  .screen h1{font-size:clamp(30px,8vw,48px);margin:6px 0 4px;line-height:1.05}
+  .tag{color:var(--soft);font-weight:800;margin:0}
+  .rule{font-size:clamp(17px,4.4vw,20px);max-width:520px;margin:12px auto 18px;line-height:1.4}
+  .hero{width:min(260px,70vw);margin:4px auto 0;display:block}
+  .stepper{display:inline-flex;align-items:center;gap:12px;background:var(--card);border:3px solid var(--edge);
+    border-radius:999px;padding:6px;margin-bottom:22px}
+  .stepper button{width:52px;height:52px;border-radius:50%;border:none;background:#f5e3cf;font-size:30px;font-weight:900;line-height:1}
+  .stepper button:disabled{opacity:.35;cursor:default}
+  .stepper .n{min-width:130px;font-size:22px;font-weight:900}
+  .people{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin:-10px auto 18px;max-width:340px}
+  .people svg{width:26px;height:26px}
+
+  /* top bar */
+  #top{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+  .pill{background:var(--card);border:3px solid var(--edge);border-radius:999px;padding:6px 14px;font-weight:900;font-size:17px;white-space:nowrap}
+  .hint{font-size:15px;font-weight:800;color:var(--soft);text-align:right}
+  #board{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+  .chip{flex:1 1 calc(20% - 6px);min-width:92px;min-height:48px;border-radius:14px;border:3px solid var(--edge);
+    background:var(--card);display:flex;align-items:center;justify-content:space-between;gap:6px;padding:4px 10px;
+    font-weight:800;font-size:15px;cursor:default;transition:background .2s,border-color .2s,transform .15s}
+  @media (max-width:560px){ .chip{min-width:0;flex:0 0 calc(25% - 5px);padding:4px 6px;font-size:14px} .chip .lg{display:none} .chip .nm{gap:4px} .chip .dot{width:10px;height:10px} .chip b{font-size:18px;min-width:0} }
+  .chip .sh::before{content:''}
+  @media (max-width:560px){ .chip .sh::before{content:'P'} }
+  .chip b{font-size:20px;text-align:right}
+  .chip .dot{width:14px;height:14px;border-radius:50%;flex:0 0 auto}
+  .chip .nm{display:flex;align-items:center;gap:6px}
+  #board.award .chip{cursor:pointer;border-color:#f3c47a;animation:beckon 1.4s ease-in-out infinite}
+  #board.award .chip.got{background:var(--realbg);border-color:var(--real);animation:none}
+  @keyframes beckon{0%,100%{box-shadow:0 0 0 0 rgba(255,209,102,0)}50%{box-shadow:0 0 0 4px rgba(255,209,102,.6)}}
+  .bump{animation:bump .4s ease}
+  @keyframes bump{40%{transform:scale(1.4)}}
+
+  /* ticket */
+  .ticket{background:#fff;border:3px solid var(--edge);border-radius:22px;padding:14px 16px;position:relative;
+    box-shadow:0 4px 0 rgba(160,120,90,.15);display:flex;gap:14px;align-items:center;margin-bottom:12px}
+  .ticon{flex:0 0 auto;width:clamp(64px,17vw,92px);height:clamp(64px,17vw,92px);border-radius:18px;background:#fbefe2;display:flex;align-items:center;justify-content:center}
+  .ticon svg{width:78%;height:78%}
+  .tnum{font-size:13px;font-weight:900;color:var(--soft);letter-spacing:.06em}
+  .tprob{font-size:clamp(20px,5.2vw,28px);font-weight:900;line-height:1.15;margin-top:2px}
+
+  .mode{display:flex;align-items:center;justify-content:center;gap:10px;border-radius:16px;padding:8px 12px;margin-bottom:12px;
+    font-size:clamp(19px,5vw,24px);font-weight:900}
+  .mode svg{width:30px;height:30px;flex:0 0 auto}
+  .mode.fake{background:var(--fakebg);color:#b23c38;border:3px solid #f3b9b0}
+  .mode.real{background:var(--realbg);color:#2c7a52;border:3px solid #a9dcbc}
+
+  #fixes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+  @media (max-width:560px){ #fixes{grid-template-columns:1fr} }
+  .fix{position:relative;min-height:72px;text-align:left;display:flex;align-items:center;gap:12px;
+    background:var(--card);border:3px solid var(--edge);border-radius:18px;padding:10px 12px;
+    font-size:clamp(16px,4.2vw,19px);font-weight:700;line-height:1.25;transition:background .25s,border-color .25s,opacity .25s}
+  .fix .L{flex:0 0 auto;width:44px;height:44px;border-radius:12px;background:#f5e3cf;display:flex;align-items:center;justify-content:center;
+    font-size:24px;font-weight:900}
+  .fix .txt{flex:1}
+  .fix .verdict{display:block;font-size:14px;font-weight:900;margin-top:4px}
+  .fix.isreal .verdict{color:var(--real)} .fix.isfake .verdict{color:var(--fake)}
+  .fix.tried{opacity:.6;cursor:default}
+  .fix.shake{animation:shake .45s ease}
+  @keyframes shake{20%{transform:translateX(-7px)}40%{transform:translateX(7px)}60%{transform:translateX(-4px)}80%{transform:translateX(3px)}}
+  .fix.win{background:#fff6d4;border-color:var(--glow);box-shadow:0 0 0 3px var(--glow),0 0 22px 4px rgba(255,209,102,.8);opacity:1;animation:pop .5s cubic-bezier(.3,1.6,.5,1)}
+  .fix.win .L{background:var(--glow)}
+  @keyframes pop{0%{transform:scale(.94)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+  #fixes.revealed .fix{cursor:default}
+  #fixes.revealed .fix:not(.win){opacity:.7}
+
+  .bit{position:fixed;width:9px;height:14px;border-radius:3px;pointer-events:none;z-index:30;animation:fly 1s ease-out forwards}
+  @keyframes fly{0%{transform:translate(0,0) rotate(0);opacity:1}100%{transform:translate(var(--dx),var(--dy)) rotate(var(--r));opacity:0}}
+
+
+  /* who said what */
+  #guesses{background:var(--card);border:3px solid var(--edge);border-radius:18px;padding:10px;margin-bottom:14px}
+  .gtitle{font-weight:900;font-size:17px;margin:0 0 8px;text-align:center}
+  .grows{display:grid;grid-template-columns:1fr 1fr;gap:6px 14px}
+  @media (max-width:560px){ .grows{grid-template-columns:1fr} }
+  .grow{display:flex;align-items:center;gap:6px;padding:3px 4px;border-radius:12px;transition:background .25s}
+  .grow.ok{background:var(--realbg)}
+  .gname{display:flex;align-items:center;gap:6px;font-weight:900;min-width:52px}
+  .gname .dot{width:12px;height:12px;border-radius:50%}
+  .gl{flex:1;min-width:48px;height:48px;border-radius:12px;border:3px solid var(--edge);background:#fff;font-weight:900;font-size:20px;transition:background .15s}
+  .gl.on{background:var(--pc);border-color:var(--pc);color:#fff}
+  .gl:disabled{cursor:default}
+  .gl.ans{box-shadow:0 0 0 3px var(--real)}
+  .gl.on:not(.ans):disabled{opacity:.5}
+  .gl:not(.on):disabled{opacity:.6}
+  #actions{display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center}
+  #msg{font-size:18px;font-weight:800;min-height:24px}
+
+  /* end */
+  #trophy{width:min(130px,36vw)}
+  .rank{list-style:none;padding:0;margin:10px auto 20px;max-width:420px;text-align:left}
+  .rank li{display:flex;align-items:center;gap:10px;background:var(--card);border:3px solid var(--edge);border-radius:16px;
+    padding:8px 12px;margin-bottom:6px;font-size:19px;font-weight:800;min-height:52px}
+  .rank li.top{background:#fff6d4;border-color:var(--glow)}
+  .rank li b{margin-left:auto;font-size:22px}
+  .rank svg{width:28px;height:28px;flex:0 0 auto}
+  .rank .dot{width:16px;height:16px;border-radius:50%;flex:0 0 auto}
+
+  @media (prefers-reduced-motion: reduce){*{animation-duration:.01ms !important;transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <section id="start" class="screen">
+    <div class="hero" id="hero"></div>
+    <p class="tag">The Help Desk Party Game</p>
+    <h1>Real Fix or Fake Fix?</h1>
+    <p class="rule">Each ticket shows four fixes: shout out the one that's <b>fake</b> (or the one that's <b>real</b>), the host taps in everyone's letter, then reveals the answer.</p>
+    <div class="stepper" aria-label="Number of players">
+      <button id="minus" aria-label="Fewer players">−</button>
+      <span class="n"><span id="pcount">4</span> players</span>
+      <button id="plus" aria-label="More players">+</button>
+    </div>
+    <div class="people" id="people"></div>
+    <div><button class="big-btn" id="startBtn">Start</button></div>
+  </section>
+
+  <main id="game" hidden>
+    <div id="top">
+      <div class="pill">Ticket <span id="tn">1</span> / 8</div>
+      <div class="hint" id="hint">Call out a letter!</div>
+    </div>
+    <div id="board"></div>
+    <div class="ticket">
+      <div class="ticon" id="ticon"></div>
+      <div><div class="tnum" id="tid">TICKET #0000</div><div class="tprob" id="tprob"></div></div>
+    </div>
+    <div class="mode" id="mode"></div>
+    <div id="fixes"></div>
+    <div id="guesses"></div>
+    <div id="actions">
+      <div id="msg"></div>
+      <button class="big-btn ghosty" id="revealBtn">Reveal answer</button>
+      <button class="big-btn" id="nextBtn" hidden>Next ticket</button>
+    </div>
+  </main>
+
+  <section id="end" class="screen" hidden>
+    <div class="hero" id="trophy"></div>
+    <h1 id="endTitle">Ticket queue cleared!</h1>
+    <p class="rule" id="endLine"></p>
+    <ol class="rank" id="rank"></ol>
+    <button class="big-btn" id="againBtn">Play again</button>
+  </section>
+</div>
+
+<script>
+(function(){
+"use strict";
+
+const ROUNDS = 8;
+const PCOLORS = ["#e15a70","#3f8fd6","#43ab72","#9a68d8","#ef9a26","#25aaa8","#c4683b","#d65fb0","#6b7fd6","#8aa33a"];
+
+// ---- the ticket bank: every fix is clearly REAL (it works) or FAKE (it won't) ----
+const BANK = [
+ {icon:"lock", p:"My password isn't working",
+  real:["Check that Caps Lock isn't on","Click “Forgot password” and follow the reset link","Call the help desk to reset it","Check your password manager — it may remember it"],
+  fake:["Type it really slowly so the computer feels bad","Shout the password at the screen","Type it with your other hand for a fresh start","Turn the keyboard upside down and try again"]},
+ {icon:"bsod", p:"I got the blue screen of death",
+  real:["Restart the computer","Write down the error code on the screen","Unplug the new gadget you just connected","Install any waiting updates after it restarts"],
+  fake:["Set a green wallpaper so it cancels out the blue","Turn the brightness down until it isn't blue anymore","Apologize to the computer out loud","Put the laptop in the freezer to calm it down"]},
+ {icon:"wifi", p:"The Wi‑Fi is down",
+  real:["Unplug the router, wait 30 seconds, plug it back in","Check that airplane mode is off","Forget the network and reconnect","Move closer to the router"],
+  fake:["Hold the laptop over your head for better reception","Wrap the router in foil to keep the signal in","Download more Wi‑Fi","Whisper the network name to the router"]},
+ {icon:"printer", p:"The printer won't print",
+  real:["Check that it has paper","Clear the stuck job from the print queue","Turn the printer off and on again","Make sure you picked the right printer"],
+  fake:["Print it 50 more times so it gets the hint","Tell the printer the document is due today","Hold paper against the screen and press Print","Gently pet the printer until it purrs"]},
+ {icon:"mic", p:"Nobody on the call can hear me",
+  real:["Check that you're not on mute","Pick the right microphone in audio settings","Unplug your headset and plug it back in","Leave the call and rejoin"],
+  fake:["Turn YOUR speaker volume all the way up","Clap twice to wake the microphone up","Rename yourself “Unmuted”","Shout so your voice gets past the mute button"]},
+ {icon:"slow", p:"My computer is super slow",
+  real:["Restart it — it's been on for 47 days","Close the 83 browser tabs you have open","Free up some disk space","Check for updates"],
+  fake:["Point a fan at it so the data blows by faster","Move the mouse faster","Delete the Recycle Bin icon so it carries less weight","Turn the brightness up so it can see where it's going"]},
+ {icon:"mouse", p:"My mouse stopped working",
+  real:["Charge it or swap the battery","Try a different USB port","Flip it over and check the on/off switch","Use a mousepad instead of the glass table"],
+  fake:["Leave a piece of cheese next to it","Click harder","Shake it like a snow globe","Rename it “Mouse 2” for a fresh start"]},
+ {icon:"power", p:"My laptop won't turn on",
+  real:["Plug in the charger and wait a few minutes","Check that the power strip is switched on","Hold the power button down for 15 seconds","Try a different outlet"],
+  fake:["Give it a pep talk","Charge your phone next to it so it gets inspired","Open and close the lid really fast","Press the power button with more confidence"]},
+ {icon:"folder", p:"I can't find a file I saved",
+  real:["Look in the Downloads folder","Search for the file name","Check the Recycle Bin","Open the app and look at Recent files"],
+  fake:["Wait — lost files usually come home on their own","Make a new folder called “Found It”","Tidy your real desk so the computer desktop gets tidier","Call the file's name out loud"]},
+ {icon:"phish", p:"An email says I won a free cruise",
+  real:["Don't click the link","Report it as phishing","Check the sender's address closely","Delete it"],
+  fake:["Reply with your password so they know it's you","Click the link, but really quickly","Forward it to everyone so they can win too","Enter your bank details to claim the prize"]},
+ {icon:"black", p:"My screen is completely black",
+  real:["Check that the monitor is turned on","Check the cable is plugged in at both ends","Move the mouse or press a key to wake it","Turn the brightness up"],
+  fake:["Shine a flashlight into the screen","Wait for sunrise","Unplug the keyboard so the screen gets more power","Switch your wallpaper to white (without looking)"]},
+ {icon:"coffee", p:"I spilled coffee on my keyboard",
+  real:["Unplug it or shut the laptop down right away","Turn it upside down so it drains","Let it dry completely before using it","Tell IT so they can swap it out"],
+  fake:["Add milk and sugar so it's less harsh","Keep typing so the keys stay warm","Blow on it like hot soup","Pour more coffee on to rinse it off"]}
+];
+
+// ---- icons ----
+const S = 'stroke="#4a3628" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"';
+function monitor(screen, face){ return `<rect x="6" y="10" width="52" height="34" rx="5" fill="${screen}" ${S}/><path d="M26,44 L24,54 M38,44 L40,54 M18,55 H46" fill="none" ${S}/>${face||""}`; }
+const ICONS = {
+  lock:`<path d="M21,29 V21 a11,11 0 0 1 22,0 V29" fill="none" ${S}/><rect x="13" y="29" width="38" height="27" rx="6" fill="#ef9a26" ${S}/><circle cx="32" cy="40" r="4" fill="#4a3628"/><path d="M32,42 V48" ${S}/>`,
+  bsod: monitor("#3f7fd6", `<circle cx="24" cy="24" r="2.6" fill="#fff"/><circle cx="40" cy="24" r="2.6" fill="#fff"/><path d="M23,36 Q32,29 41,36" fill="none" stroke="#fff" stroke-width="3.5" stroke-linecap="round"/>`),
+  black: monitor("#2c2530", `<path d="M20,22 L26,26 M44,22 L38,26" stroke="#7d6c84" stroke-width="3" stroke-linecap="round"/><circle cx="32" cy="33" r="3" fill="#7d6c84"/>`),
+  wifi:`<path d="M10,26 a31,31 0 0 1 44,0 M17,34 a21,21 0 0 1 30,0 M24,42 a11,11 0 0 1 16,0" fill="none" ${S}/><circle cx="32" cy="50" r="4" fill="#4a3628"/><path d="M12,56 L52,12" stroke="#d9534f" stroke-width="5" stroke-linecap="round"/>`,
+  printer:`<rect x="18" y="8" width="28" height="16" rx="2" fill="#fff" ${S}/><rect x="8" y="22" width="48" height="22" rx="6" fill="#9a68d8" ${S}/><rect x="18" y="38" width="28" height="18" rx="2" fill="#fff" ${S}/><path d="M24,46 H40 M24,51 H34" ${S}/><circle cx="48" cy="30" r="2.5" fill="#fff"/>`,
+  mic:`<rect x="23" y="8" width="18" height="30" rx="9" fill="#25aaa8" ${S}/><path d="M15,30 a17,17 0 0 0 34,0 M32,47 V56 M23,56 H41" fill="none" ${S}/><path d="M12,54 L52,10" stroke="#d9534f" stroke-width="5" stroke-linecap="round"/>`,
+  slow:`<path d="M18,8 H46 M18,56 H46 M21,8 C21,24 43,24 43,32 C43,40 21,40 21,56 M43,8 C43,24 21,24 21,32 C21,40 43,40 43,56" fill="none" ${S}/><path d="M26,50 Q32,43 38,50 Z" fill="#ef9a26"/><circle cx="32" cy="35" r="1.8" fill="#ef9a26"/>`,
+  mouse:`<rect x="18" y="16" width="28" height="42" rx="14" fill="#fff" ${S}/><path d="M32,16 V30 M18,30 H46" ${S}/><path d="M32,16 C32,8 40,10 44,4" fill="none" ${S}/><circle cx="50" cy="40" r="2.4" fill="#4a3628"/><circle cx="54" cy="47" r="2" fill="#4a3628"/>`,
+  power:`<rect x="8" y="12" width="48" height="32" rx="5" fill="#fbe3c6" ${S}/><path d="M4,48 H60 L56,54 H8 Z" fill="#fff" ${S}/><path d="M25,21 a10,10 0 1 0 14,0 M32,17 V28" fill="none" ${S}/>`,
+  folder:`<path d="M6,18 a4,4 0 0 1 4,-4 H24 L29,20 H54 a4,4 0 0 1 4,4 V48 a4,4 0 0 1 -4,4 H10 a4,4 0 0 1 -4,-4 Z" fill="#ef9a26" ${S}/><circle cx="35" cy="36" r="8" fill="#fff" ${S}/><path d="M41,42 L48,49" ${S}/>`,
+  phish:`<rect x="6" y="18" width="40" height="30" rx="4" fill="#fff" ${S}/><path d="M6,22 L26,36 L46,22" fill="none" ${S}/><path d="M52,6 V34 a7,7 0 0 1 -14,0 L42,30" fill="none" stroke="#7d6c84" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>`,
+  coffee:`<path d="M10,26 H42 V44 a10,10 0 0 1 -10,10 H20 a10,10 0 0 1 -10,-10 Z" fill="#c4683b" ${S}/><path d="M42,30 h5 a6,6 0 0 1 0,12 h-5" fill="none" ${S}/><path d="M20,8 q-4,5 0,10 M30,8 q-4,5 0,10" fill="none" ${S}/><path d="M50,52 q3,5 0,8 q-3,-3 0,-8" fill="#c4683b"/>`
+};
+const icon = k => `<svg viewBox="0 0 64 64">${ICONS[k]}</svg>`;
+const CHECK = c=>`<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${c}"/><path d="M9,16.5 L14,21.5 L23,11" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/></svg>`;
+const CROSS = c=>`<svg viewBox="0 0 32 32"><circle cx="16" cy="16" r="14" fill="${c}"/><path d="M11,11 L21,21 M21,11 L11,21" stroke="#fff" stroke-width="4" stroke-linecap="round"/></svg>`;
+const PERSON = c=>`<svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="5" fill="${c}"/><path d="M3,23 a9,8 0 0 1 18,0 Z" fill="${c}"/></svg>`;
+const TROPHY = `<svg viewBox="0 0 64 64"><path d="M18,8 H46 V22 a14,14 0 0 1 -28,0 Z" fill="#ffc94d" stroke="#d9a12c" stroke-width="3" stroke-linejoin="round"/><path d="M18,12 H10 a8,8 0 0 0 8,14 M46,12 H54 a8,8 0 0 1 -8,14" fill="none" stroke="#d9a12c" stroke-width="3"/><path d="M28,36 H36 V46 H28 Z" fill="#ffc94d" stroke="#d9a12c" stroke-width="3"/><rect x="20" y="46" width="24" height="8" rx="2" fill="#c4683b" stroke="#9c4f2a" stroke-width="3"/></svg>`;
+
+// ---- helpers ----
+const $ = s => document.querySelector(s);
+const shuffle = a => { for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];} return a; };
+const pick = a => a[Math.floor(Math.random()*a.length)];
+function restart(el,c){ el.classList.remove(c); void el.offsetWidth; el.classList.add(c); }
+
+// ---- state ----
+let nPlayers = 4;
+const G = { deck:[], r:0, scores:[], got:new Set(), phase:"guess" };
+
+// Build each round from its answer
+function buildRound(t, mode){
+  const answer = pick(mode==="fake" ? t.fake : t.real);
+  const others = shuffle((mode==="fake" ? t.real : t.fake).slice()).slice(0,3);
+  const opts = shuffle([
+    {text:answer, real: mode!=="fake"},
+    ...others.map(x=>({text:x, real: mode==="fake"}))
+  ]);
+  const ans = opts.findIndex(o => o.text===answer);
+  const hits = opts.filter(o => (mode==="fake" ? !o.real : o.real)).length;
+  if (hits !== 1) console.error("Round has", hits, "answers", t.p);
+  return { icon:t.icon, p:t.p, mode, opts, ans, id: 1000+Math.floor(Math.random()*9000) };
+}
+function deal(){
+  const tickets = shuffle(BANK.slice()).slice(0, ROUNDS);
+  const modes = shuffle(["fake","fake","fake","fake","real","real","real","real"]);
+  G.deck = tickets.map((t,i)=>buildRound(t, modes[i]));
+  G.r = 0; G.scores = new Array(nPlayers).fill(0);
+}
+
+// ---- start screen ----
+function drawPeople(){
+  $("#pcount").textContent = nPlayers;
+  $("#people").innerHTML = Array.from({length:nPlayers},(_,i)=>PERSON(PCOLORS[i])).join("");
+  $("#minus").disabled = nPlayers<=2; $("#plus").disabled = nPlayers>=10;
+}
+$("#hero").innerHTML = `<svg viewBox="0 0 64 64">${ICONS.bsod}</svg>`;
+$("#minus").onclick = ()=>{ if(nPlayers>2){nPlayers--;drawPeople();} };
+$("#plus").onclick  = ()=>{ if(nPlayers<10){nPlayers++;drawPeople();} };
+drawPeople();
+
+// ---- board ----
+function drawBoard(){
+  const b = $("#board"); b.innerHTML = "";
+  G.scores.forEach((s,i)=>{
+    const c = document.createElement("button");
+    c.className = "chip" + (G.got.has(i) ? " got" : "");
+    c.type = "button"; c.dataset.i = i;
+    const shown = s + (G.got.has(i)?1:0);
+    c.innerHTML = `<span class="nm"><span class="dot" style="background:${PCOLORS[i]}"></span><span><span class="lg">Player </span><span class="sh">${i+1}</span></span></span><b>${shown}</b>`;
+    c.setAttribute("aria-label", `Player ${i+1}, ${shown} points`);
+    c.onclick = ()=>{
+      if (G.phase!=="award") return;
+      G.got.has(i) ? G.got.delete(i) : G.got.add(i);
+      drawBoard(); restart(document.querySelector(`.chip[data-i="${i}"] b`),"bump");
+    };
+    b.appendChild(c);
+  });
+  b.classList.toggle("award", G.phase==="award");
+}
+
+// ---- rounds ----
+function showRound(){
+  const R = G.deck[G.r];
+  G.phase = "guess"; G.got = new Set(); G.picks = new Array(nPlayers).fill(null);
+  $("#tn").textContent = G.r+1;
+  $("#hint").textContent = "Everyone: call out a letter!";
+  drawGuesses();
+  $("#ticon").innerHTML = icon(R.icon);
+  $("#tid").textContent = "TICKET #" + R.id;
+  $("#tprob").textContent = "“" + R.p + "”";
+  const m = $("#mode");
+  m.className = "mode " + R.mode;
+  m.innerHTML = R.mode==="fake"
+    ? `${CROSS("#d9534f")}<span>Find the one <u>FAKE</u> fix</span>`
+    : `${CHECK("#3f9e6e")}<span>Find the one <u>REAL</u> fix</span>`;
+  const f = $("#fixes"); f.innerHTML = ""; f.classList.remove("revealed");
+  R.opts.forEach((o,i)=>{
+    const b = document.createElement("button");
+    b.className = "fix"; b.type = "button"; b.dataset.i = i;
+    b.innerHTML = `<span class="L">${"ABCD"[i]}</span><span class="txt">${o.text}<span class="verdict"></span></span>`;
+    b.onclick = ()=>tryFix(i);
+    f.appendChild(b);
+  });
+  $("#msg").textContent = "";
+  $("#revealBtn").hidden = false; $("#nextBtn").hidden = true;
+  $("#nextBtn").textContent = G.r===ROUNDS-1 ? "See who won" : "Next ticket";
+  drawBoard();
+  window.scrollTo({top:0});
+}
+
+function drawGuesses(){
+  const R = G.deck[G.r], box = $("#guesses");
+  const done = G.phase !== "guess";
+  box.innerHTML = `<div class="gtitle">${done ? "Who said what" : "Who said what? Tap each player's letter"}</div><div class="grows">` +
+    G.picks.map((pk,i)=>{
+      const ok = done && pk===R.ans;
+      return `<div class="grow${ok?" ok":""}"><span class="gname"><span class="dot" style="background:${PCOLORS[i]}"></span>P${i+1}</span>` +
+        [0,1,2,3].map(L=>{
+          let c = "gl"; if (pk===L) c += " on"; if (done && L===R.ans) c += " ans";
+          return `<button type="button" class="${c}" data-p="${i}" data-l="${L}" style="--pc:${PCOLORS[i]}" ${done?"disabled":""} aria-label="Player ${i+1} said ${"ABCD"[L]}">${"ABCD"[L]}</button>`;
+        }).join("") + `</div>`;
+    }).join("") + `</div>`;
+  box.querySelectorAll(".gl").forEach(b=>b.onclick=()=>{
+    if (G.phase!=="guess") return;
+    const p = +b.dataset.p, l = +b.dataset.l;
+    G.picks[p] = G.picks[p]===l ? null : l;
+    drawGuesses();
+  });
+}
+
+function setVerdict(el, real){
+  el.classList.add(real ? "isreal" : "isfake");
+  el.querySelector(".verdict").textContent = real ? "✓ Real fix — this works" : "✗ Fake fix — won't work";
+}
+
+function tryFix(i){
+  if (G.phase!=="guess") return;
+  const R = G.deck[G.r];
+  const el = document.querySelector(`.fix[data-i="${i}"]`);
+  if (el.classList.contains("tried")) return;
+  if (i === R.ans){ reveal(); return; }
+  el.classList.add("tried"); setVerdict(el, R.opts[i].real);
+  restart(el,"shake");
+  $("#msg").textContent = R.mode==="fake" ? "Nope, that one actually works. Try another!" : "Nope, that one won't help. Try another!";
+}
+
+function reveal(){
+  const R = G.deck[G.r];
+  G.phase = "award";
+  document.querySelectorAll(".fix").forEach((el,i)=>setVerdict(el, R.opts[i].real));
+  const w = document.querySelector(`.fix[data-i="${R.ans}"]`);
+  w.classList.add("win"); $("#fixes").classList.add("revealed");
+  confetti(w);
+  G.picks.forEach((pk,i)=>{ if (pk===R.ans) G.got.add(i); });
+  drawGuesses();
+  const n = G.got.size, any = G.picks.some(x=>x!==null);
+  $("#msg").textContent = any
+    ? `It's ${"ABCD"[R.ans]}! ${n===0?"Nobody":n===1?"1 player":n+" players"} got it. Tap a box above to fix a score.`
+    : `It's ${"ABCD"[R.ans]}! Tap everyone who got it right.`;
+  $("#hint").textContent = "Tap a box to fix a score";
+  $("#revealBtn").hidden = true; $("#nextBtn").hidden = false;
+  drawBoard();
+}
+
+function confetti(el){
+  const r = el.getBoundingClientRect();
+  for (let k=0;k<18;k++){
+    const d = document.createElement("div");
+    d.className = "bit";
+    d.style.left = (r.left + r.width/2) + "px"; d.style.top = (r.top + r.height/2) + "px";
+    d.style.background = pick(["#ffc94d","#e15a70","#3f8fd6","#43ab72","#9a68d8"]);
+    d.style.setProperty("--dx", (Math.random()*240-120)+"px");
+    d.style.setProperty("--dy", (Math.random()*-160-20)+"px");
+    d.style.setProperty("--r", (Math.random()*540-270)+"deg");
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(), 1100);
+  }
+}
+
+$("#revealBtn").onclick = ()=>{ if(G.phase==="guess") reveal(); };
+$("#nextBtn").onclick = ()=>{
+  G.got.forEach(i=>G.scores[i]++);
+  G.got = new Set();
+  if (G.r < ROUNDS-1){ G.r++; showRound(); } else endGame();
+};
+
+// ---- end ----
+function endGame(){
+  document.querySelectorAll(".bit").forEach(d=>d.remove());
+  $("#game").hidden = true; $("#end").hidden = false;
+  const order = G.scores.map((s,i)=>({s,i})).sort((a,b)=>b.s-a.s || a.i-b.i);
+  const top = order[0].s;
+  const winners = order.filter(o=>o.s===top);
+  $("#trophy").innerHTML = TROPHY;
+  $("#endTitle").textContent = winners.length===1 ? `Player ${winners[0].i+1} wins!` : "It's a tie!";
+  $("#endLine").textContent = winners.length===1
+    ? "Promoted to Senior Fake-Fix Detector. Everyone else: have you tried turning it off and on again?"
+    : `Players ${winners.map(w=>w.i+1).join(" & ")} share the Help Desk Hero title!`;
+  $("#rank").innerHTML = order.map(o=>`<li class="${o.s===top?"top":""}">
+      ${o.s===top ? TROPHY : `<span class="dot" style="background:${PCOLORS[o.i]}"></span>`}
+      Player ${o.i+1}<b>${o.s} / ${ROUNDS}</b></li>`).join("");
+  window.scrollTo({top:0});
+}
+
+function startGame(){
+  deal();
+  $("#start").hidden = true; $("#end").hidden = true; $("#game").hidden = false;
+  showRound();
+}
+$("#startBtn").onclick = startGame;
+$("#againBtn").onclick = startGame;
+})();
+</script>
+</body>
+</html>
